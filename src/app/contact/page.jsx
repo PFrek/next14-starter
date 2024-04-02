@@ -1,7 +1,7 @@
 "use client";
 import React from "react";
 import Image from "next/image";
-import dynamic from "next/dynamic";
+// import dynamic from "next/dynamic";
 import styles from "./contact.module.css";
 // import HydrationTest from "@/components/hydrationTest";
 
