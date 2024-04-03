@@ -15,3 +15,10 @@ export const connectToDb = async () => {
     throw new Error(error);
   }
 };
+
+export const convertPostDate = (postDate) => {
+  // post.createdAt.toString().slice(4, 16)
+  const date = new Date(postDate);
+
+  return date.toLocaleDateString();
+};

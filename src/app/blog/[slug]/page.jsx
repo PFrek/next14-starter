@@ -3,6 +3,7 @@ import Image from "next/image";
 import styles from "./singlePost.module.css";
 import PostUser from "@/components/postUser/postUser";
 import { getPost } from "@/lib/data";
+import { convertPostDate } from "@/lib/utils";
 
 // FETCH DATA WITH AN API
 const getData = async (slug) => {
@@ -55,7 +56,7 @@ const SinglePostPage = async ({ params }) => {
           )}
           <div className={styles.detailText}>
             <span className={styles.detailTitle}>Published</span>
-            <span className={styles.detailValue}>{post.createdAt.toString().slice(4, 16)}</span>
+            <span className={styles.detailValue}>{convertPostDate(post.createdAt)}</span>
           </div>
         </div>
         <div className={styles.content}>{post.desc}</div>

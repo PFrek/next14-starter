@@ -6,7 +6,7 @@ import { revalidatePath } from "next/cache";
 import { signIn, signOut } from "./auth";
 import bcrypt from "bcrypt";
 
-export const addPost = async (formData) => {
+export const addPost = async (previousState, formData) => {
   // const title = formData.get("title");
   // const desc = formData.get("desc");
   // const slug = formData.get("slug");
@@ -22,12 +22,20 @@ export const addPost = async (formData) => {
       userId,
     });
 
+    const slugExists = await Post.findOne({slug});
+    if(slugExists) {
+      return { error: "Slug already in use!" };
+    }
+
     await newPost.save();
     console.log("saved to db");
     revalidatePath("/blog");
+    revalidatePath("/admin");
+
+
   } catch (error) {
     console.log(error);
-    throw new Error("Something went wrong!");
+    return { error: "Something went wrong!" };
   }
 };
 
@@ -40,6 +48,7 @@ export const deletePost = async (formData) => {
     await Post.findByIdAndDelete(id);
     console.log("deleted from db");
     revalidatePath("/blog");
+    revalidatePath("/admin");
   } catch (error) {
     console.log(error);
     throw new Error("Something went wrong!");
@@ -67,9 +76,9 @@ export const register = async (previousState, formData) => {
   try {
     connectToDb();
 
-    const user = await User.findOne({username});
-    
-    if(user) {
+    const user = await User.findOne({ username });
+
+    if (user) {
       return { error: "Username already exists" };
     }
 
@@ -87,7 +96,6 @@ export const register = async (previousState, formData) => {
     console.log("Created new user");
 
     return { success: true };
-
   } catch (error) {
     console.log(error);
     return { error: "Something went wrong!" };
@@ -95,18 +103,58 @@ export const register = async (previousState, formData) => {
 };
 
 export const login = async (previousState, formData) => {
-  const { username, password } =
-    Object.fromEntries(formData);
+  const { username, password } = Object.fromEntries(formData);
 
   try {
     await signIn("credentials", { username, password });
-
   } catch (error) {
     console.log(error);
 
-    if(error.message.includes("CredentialsSignin")) {
+    if (error.message.includes("CredentialsSignin")) {
       return { error: "Invalid username or password" };
     }
     throw error;
+  }
+};
+
+export const addUser = async (previousState, formData) => {
+  const { username, email, password, img, isAdmin } = Object.fromEntries(formData);
+
+  const salt = await bcrypt.genSalt(10);
+  const hashedPassword = await bcrypt.hash(password, salt);
+
+  try {
+    connectToDb();
+    const newUser = new User({
+      username,
+      email,
+      password: hashedPassword,
+      img,
+      isAdmin,
+    });
+
+    await newUser.save();
+    console.log("saved to db");
+    revalidatePath("/admin");
+  } catch (error) {
+    console.log(error);
+    return { error: "Something went wrong!" };
+  }
+};
+
+export const deleteUser = async (formData) => {
+  const { id } = Object.fromEntries(formData);
+
+  try {
+    connectToDb();
+
+    await Post.deleteMany({ userId: id });
+
+    await User.findByIdAndDelete(id);
+    console.log("deleted from db");
+    revalidatePath("/admin");
+  } catch (error) {
+    console.log(error);
+    throw new Error("Something went wrong!");
   }
 };
